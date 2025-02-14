@@ -1,5 +1,6 @@
 #include "minifont.h"
 #include "clock_display.hpp"
+#include "util.h"
 
 #include <memory.h>
 #include <Arduino.h>
@@ -45,17 +46,22 @@ int put_string(screen_cursor_t *cur, const char *str) {
   return 0;
 }
 
-// n_segments: 0 for per-character animation
-int put_string_animation(screen_cursor_t *cur, const char *str, int n_segments, uint32_t delay_ms_per_segment, bool reverse) {
+int put_string_animation(screen_cursor_t *cur, const char *str, uint32_t delay_ms_per_segment, bool reverse) {
   cur->x = 0;
 
-  put_string(cur, str);
+  // nie musimy później sprawdzać overflow bo to nam już sprawdzi
+  int ret = put_string(cur, str);
+  if (ret != 0) return ret;
+
   set_mask(cur, 0^reverse);
   size_t mask_x = 0;
   while (*str != 0) {
-    const font_char_t *ch = get_char_font(*str);
-    if (!ch) return -1;
-    size_t char_w = ch->advance + CHAR_GAP;
+    char ch = *str;
+
+    const font_char_t *fnt = get_char_font(ch);
+    if (fnt == 0) return ERR_NO_CHAR_FONT;
+
+    size_t char_w = fnt->advance + CHAR_GAP;
 
     for (size_t x = 0; x < char_w; x += 1) {
       for (size_t y = 0; y < SCREEN_H; y += 1) {
@@ -66,11 +72,13 @@ int put_string_animation(screen_cursor_t *cur, const char *str, int n_segments, 
 
     print_screen(cur);
     mask_x += char_w;
-    str += 1;
+    str++;
     delay(delay_ms_per_segment);
   }
 
   set_mask(cur, 1^reverse);
+
+  return 0;
 }
 
 
@@ -79,12 +87,12 @@ void print_screen(screen_cursor_t *cur) {
   for (int y = 0; y < SCREEN_H; y += 1) {
     for (int x = 0; x < SCREEN_W; x += 1) {
       if (cur->scr[y*SCREEN_W+x] & cur->scr_mask[y*SCREEN_W+x] == 1)
-        Serial.print("#");
+        slog("#");
       else if (cur->scr[y*SCREEN_W+x] == 1 && cur->scr_mask[y*SCREEN_W+x] == 0)
-        Serial.print(".");
+        slog(".");
       else
-        Serial.print(" ");
+        slog(" ");
     }
-    Serial.print("\n");
+    slog("\n");
   }
 }

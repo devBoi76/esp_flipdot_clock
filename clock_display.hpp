@@ -38,7 +38,10 @@ int put_char(screen_cursor_t *cur, char c);
 
 int put_string(screen_cursor_t *cur, const char *str);
 
-int put_string_animation(screen_cursor_t *cur, const char *str, int n_segments, uint32_t delay_ms_per_segment, bool reverse = false);
+int put_string_animation(screen_cursor_t *cur, const char *str, uint32_t delay_ms_per_segment, bool reverse = false);
 
 void clear_screen(screen_cursor_t *cur);
+
+void set_mask(screen_cursor_t *cur, uint8_t val);
+
 

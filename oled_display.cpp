@@ -38,6 +38,12 @@ void update_oled(bool got_time_at_all, bool gps_got_fix, TimeSource time_source,
   } else {
     oled.println("BRAK");
   }
+  oled.print("FIX: ");
+  if (gps_got_fix) {
+    oled.println("TAK");
+  } else {
+    oled.println("NIE");
+  }
 
   oled.print((int) co2_ppm);
   oled.print("ppmCO2");
