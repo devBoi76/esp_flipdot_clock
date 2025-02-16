@@ -1,6 +1,8 @@
 #pragma once
 
 #include <Arduino.h>
+#include <time.h>
+#include <stdlib.h>
 
 extern bool show_log();
 
@@ -18,7 +20,23 @@ void slogln(T v) {
   }
 }
 
-// // copies string
-// int copy_string (char *to, const char* from, size_t max_from_size) {
+inline time_t
+my_timegm(struct tm *tm)
+{
+    time_t ret;
+    char *tz;
 
-// }
+    tz = getenv("TZ");
+    if (tz)
+        tz = strdup(tz);
+    setenv("TZ", "", 1);
+    tzset();
+    ret = mktime(tm);
+    if (tz) {
+        setenv("TZ", tz, 1);
+        free(tz);
+    } else
+        unsetenv("TZ");
+    tzset();
+    return ret;
+}
