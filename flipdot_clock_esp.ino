@@ -1,5 +1,3 @@
-#define COMPILE_DEBUG_LOGS
-
 #include <Preferences.h>
 
 #include <Wire.h>
@@ -55,9 +53,7 @@ const int PHOTODIODE = 39;
 const int DISPLAY_TRESHOLD = 300;
 
 // debug pin config
-// #define DEBUG_LOG_ENABLE_PIN 0
-
-#define DEBUG_LOG_ENABLE_PIN 0
+#define DEBUG_LOG_ENABLE_PIN 16
 
 
 // current co2, temp, and humidity
@@ -99,8 +95,8 @@ DisplayedContent get_pressed_button() {
 
 void on_gps_uart_rx();
 
-bool get_enable_logging() {
-  return (digitalRead(DEBUG_LOG_ENABLE_PIN) == HIGH)
+bool get_debug_log_enable() {
+  return digitalRead(DEBUG_LOG_ENABLE_PIN) == HIGH;
 }
 
 bool try_connect_wifi(const char *ssid, const char *password) {
@@ -473,6 +469,9 @@ void on_gps_uart_rx() {
   struct timeval tv;
   tv.tv_sec = my_timegm(&gps_data.utc_timeinfo);
   tv.tv_usec = 0;
-  Serial.println((uint64_t)tv.tv_sec);
+  if (get_debug_log_enable()) {
+    Serial.print("[GPS debug] Timestamp: ");
+    Serial.println((uint64_t)tv.tv_sec);
+  }
   settimeofday(&tv, NULL);
 }

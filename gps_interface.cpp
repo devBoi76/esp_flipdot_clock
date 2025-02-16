@@ -269,15 +269,15 @@ GPZDA_Data parse_gps_time_data(const char *line, size_t len) {
   }
 }
 
-bool get_debug_log_enable() {return true;}
+extern bool get_debug_log_enable();
 
 GPSTimeUpdateData parse_gps_message(const char *message, size_t len) {
-  #ifdef COMPILE_DEBUG_LOGS
+
   if (get_debug_log_enable()) {
     Serial.print("[GPS debug] : ");
     Serial.println(message);
   }
-  #endif
+
 
   GPSTimeUpdateData ret;
 
