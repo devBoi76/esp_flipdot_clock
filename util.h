@@ -17,3 +17,8 @@ void slogln(T v) {
     Serial.println(v);
   }
 }
+
+// // copies string
+// int copy_string (char *to, const char* from, size_t max_from_size) {
+
+// }

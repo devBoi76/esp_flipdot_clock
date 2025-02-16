@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 
 
 #ifndef SCREEN_H
@@ -44,4 +45,5 @@ void clear_screen(screen_cursor_t *cur);
 
 void set_mask(screen_cursor_t *cur, uint8_t val);
 
+bool check_error(int screen_error, const char *tag);
 

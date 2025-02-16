@@ -5,6 +5,21 @@
 #include <memory.h>
 #include <Arduino.h>
 
+bool check_error(int screen_error, const char *tag) {
+  if (screen_error == 0) return false;
+
+  Serial.print("[Screen Error] : ");
+  Serial.print(tag);
+
+  switch(screen_error) {
+    case ERR_NO_CHAR_FONT: Serial.println("ERR_NO_CHAR_FONT"); break;
+    case ERR_OVERFLOW: Serial.println("ERR_OVERFLOW"); break;
+    default: Serial.print("Unknown: "); Serial.println(screen_error); break;
+  }
+
+  return true;
+}
+
 void clear_screen(screen_cursor_t *cur) {
   memset(cur->scr, 0, SCREEN_SZ);
   cur->x = 0;
@@ -31,7 +46,7 @@ int put_char(screen_cursor_t *cur, char c) {
       cur->scr[y*SCREEN_W + cur->x + x] = fnt->data[y*fnt->advance + x];
     }
   }
-  cur->x += (fnt->advance + CHAR_GAP);
+  cur->x += (fnt->advance + fnt->gap);
 
   return 0;
 }
@@ -39,7 +54,7 @@ int put_char(screen_cursor_t *cur, char c) {
 int put_string(screen_cursor_t *cur, const char *str) {
   while (*str != 0) {
     int err = put_char(cur, *str);
-    if (err != 0) return err;
+    if (check_error(err, "put_string()")) return err;
 
     str += 1;
   }
@@ -47,11 +62,11 @@ int put_string(screen_cursor_t *cur, const char *str) {
 }
 
 int put_string_animation(screen_cursor_t *cur, const char *str, uint32_t delay_ms_per_segment, bool reverse) {
-  cur->x = 0;
+  clear_screen(cur);
 
   // nie musimy później sprawdzać overflow bo to nam już sprawdzi
   int ret = put_string(cur, str);
-  if (ret != 0) return ret;
+  if (check_error(ret, "put_string_animation()")) return ret;
 
   set_mask(cur, 0^reverse);
   size_t mask_x = 0;
@@ -59,9 +74,7 @@ int put_string_animation(screen_cursor_t *cur, const char *str, uint32_t delay_m
     char ch = *str;
 
     const font_char_t *fnt = get_char_font(ch);
-    if (fnt == 0) return ERR_NO_CHAR_FONT;
-
-    size_t char_w = fnt->advance + CHAR_GAP;
+    size_t char_w = fnt->advance + fnt->gap;
 
     for (size_t x = 0; x < char_w; x += 1) {
       for (size_t y = 0; y < SCREEN_H; y += 1) {

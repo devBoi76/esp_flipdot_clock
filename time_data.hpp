@@ -14,9 +14,9 @@ enum TimeSource {
 };
 
 // Which time source is being used for getting the time
-inline TimeSource time_source = GPS;
+inline TimeSource time_source = LOCAL;
 inline bool gps_got_fix = false;
 inline bool got_time_at_all = false;
-inline bool do_pick_time_source = false;
+inline bool do_pick_time_source = true;
 
 

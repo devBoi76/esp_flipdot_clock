@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <ctime>
 #include <stddef.h>
 
 enum GPZDA_Status {
@@ -27,7 +28,9 @@ typedef struct {
   uint8_t minute;
   uint8_t second;
   uint16_t millisecond;
+  // 1-31
   uint8_t day;
+  // 1-12
   uint8_t month;
   uint16_t year;
   int8_t timezone;
@@ -37,3 +40,12 @@ typedef struct {
 
 bool starts_with(const char* str, const char* prefix);
 GPZDA_Data parse_gps_time_data(const char *line, size_t len);
+
+struct GPSTimeUpdateData {
+  struct tm utc_timeinfo;
+  bool got_fix = false;
+  bool is_gpzda = false;
+  bool time_data_valid = true;
+};
+
+GPSTimeUpdateData parse_gps_message(const char *message, size_t len);

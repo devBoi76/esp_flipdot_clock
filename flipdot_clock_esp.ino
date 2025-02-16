@@ -3,6 +3,7 @@
 
 #include <Wire.h>
 
+#include <ctime>
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
@@ -26,14 +27,14 @@
 #define PASS_PREF "password"
 
 bool wifi_set_correctly = false;
-char wifi_ssid[33];//"moto g84 5G Jan";
-char wifi_password[128] = "niepowiem";
+String wifi_ssid;
+String wifi_password;
 
 Preferences preferences;
 
 const char *ntpServer = "pool.ntp.org";
-const long  gmt_offset_sec = 3600;
-const int   daylight_offset_sec = 3600;
+
+const char *timezone_code_CET = "CET-1CEST,M3.5.0,M10.5.0/3";
 
 // uart config
 const int RXD1 = 22;
@@ -58,6 +59,14 @@ float temperature = -100;
 float humidity = -100;
 bool scd30_data_valid = false;
 
+enum DisplayedContent {
+    TIME,
+    TEMPERATURE,
+    HUMIDITY,
+    CO2,
+};
+DisplayedContent displayed_content = TIME;
+
 void update_time_gps();
 
 bool try_connect_wifi(const char *ssid, const char *password) {
@@ -71,8 +80,11 @@ bool try_connect_wifi(const char *ssid, const char *password) {
   Serial.println(password);
 
   if (WiFi.isConnected()) {
-    WiFi.disconnect(true);
+    WiFi.disconnect();
   }
+
+  
+
   WiFi.begin(ssid, password);
   Serial.println("Connecting to WiFi...");
   while (true) {
@@ -82,7 +94,6 @@ bool try_connect_wifi(const char *ssid, const char *password) {
         Serial.println("Connected");
         Serial.print("Local IP: ");
         Serial.println(WiFi.localIP());
-        configTime(gmt_offset_sec, daylight_offset_sec, ntpServer);
         time_source = NTP;
         return true;
       case WL_NO_SSID_AVAIL:
@@ -114,33 +125,42 @@ ConfigState config_state = NONE;
 bool show_log() {
   return config_state == NONE;
 }
-char pc_rx_buf[512];
-char new_ssid[33];
-char new_password[128];
+
+String new_ssid;
+String new_password;
 void on_recieve_computer_data() {
-  const int n = Serial.readBytesUntil('\n', pc_rx_buf, sizeof(pc_rx_buf));
-  if (n == 0) return;
+  if (!Serial.available()) return;
+
+  String input = Serial.readStringUntil('\n');
+  input.trim();
+
+  if (input.length() == 0) {
+    config_state = NONE;
+    Serial.println("Empty input.");
+    Serial.println("Type `config` to configure wifi.");
+    return;
+  }
 
   if (config_state == NONE) {
-    config_state = SSID;
-    if (!starts_with(pc_rx_buf, "config")) {
-      Serial.println("Unknown command. Type `config` to configure wifi.");
-      return;
+    // initial command recognition
+    if (!input.startsWith("config")) {
+        Serial.println("Unknown command. Type `config` to configure wifi.");
+        return;
     }
+
+    config_state = SSID;
     Serial.print("Enter wifi SSID (name): ");
   } else if (config_state == SSID) {
+    new_ssid = input;
     config_state = PASSWD;
-    strncpy(new_ssid, pc_rx_buf, n);
-    // new_ssid[n] = 0;
     Serial.println("Enter wifi password: ");
   } else if (config_state == PASSWD) {
+    new_password = input;
     config_state = NONE;
-    strncpy(new_password, pc_rx_buf, n);
-    // new_password[n] = 0;
+
+    wifi_ssid = new_ssid;
+    wifi_password = new_password;
     wifi_set_correctly = true;
-    // if (try_connect_wifi(new_ssid, new_password)) {
-    strncpy(wifi_ssid, new_ssid, strlen(new_ssid));
-    strncpy(wifi_password, new_password, strlen(new_password));
 
     // save new credentials
     preferences.begin("esp-clock", false);
@@ -168,23 +188,36 @@ void setup() {
   // init preferences
   preferences.begin("esp-clock", false);
 
-  preferences.getString(SSID_PREF, wifi_ssid, sizeof wifi_ssid);
-  preferences.getString(PASS_PREF, wifi_password, sizeof wifi_password);
+  wifi_ssid = preferences.getString(SSID_PREF);
+  wifi_password = preferences.getString(PASS_PREF);
 
   preferences.end();
 
-  if (strlen(wifi_ssid) != 0 && strlen(wifi_password) != 0)
+  if (!wifi_ssid.isEmpty() && !wifi_password.isEmpty())
     wifi_set_correctly = true;
 
   // init wifi
-  try_connect_wifi(wifi_ssid, wifi_password);
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  time_source = try_connect_wifi(wifi_ssid.c_str(), wifi_password.c_str()) ? NTP : LOCAL;
+  config_state = NONE;
 
   // init gps
   GPS_UART.begin(GPS_BAUD_RATE, SERIAL_8N1, RXD2, TXD2);
-  GPS_UART.onReceive(update_time_gps);
+  GPS_UART.onReceive(on_gps_uart_rx);
   Serial.onReceive(on_recieve_computer_data);
 
   Serial.println("[Serial] init success.");
+
+  // init time
+  setenv("TZ", timezone_code_CET, 1);
+  tzset();
+
+  sntp_setoperatingmode(SNTP_OPMODE_POLL);
+  sntp_setservername(0, ntpServer);
+  sntp_init();
+
+  if (WiFi.isConnected()) sntp_restart();
 
   // init oled
   if (!try_init_oled(Wire)) {
@@ -200,15 +233,26 @@ void setup() {
   } else {
     Serial.println("[SCD30] init success.");
   }
-  
+
+  // test screen
+  Serial.println("[Screen test] begin");
+  for (int i = 0; i < 3; i += 1) {
+    if (check_error(put_string_animation(&screen_cursor, "|||||||||||||||||||||||||||", 30), "setup_1")) for(;;);
+    delay(100);
+    if (check_error(put_string_animation(&screen_cursor, "|||||||||||||||||||||||||||", 30, true), "setup_2")) for(;;);
+  }
+  Serial.println("[Screen test] end");
+
 }
 
 void resolve_time_data() {
   do_pick_time_source |= !WiFi.isConnected();
+
   if (do_pick_time_source) {
-    if(try_connect_wifi(wifi_ssid, wifi_password)) {
+    if(try_connect_wifi(wifi_ssid.c_str(), wifi_password.c_str())) {
       time_source = NTP;
       do_pick_time_source = false;
+      got_time_at_all = true;
     } else if (gps_got_fix) {
       time_source = GPS;
     } else {
@@ -216,13 +260,12 @@ void resolve_time_data() {
     }
   }
 
-  if (time_source != GPS) {
-    if (getLocalTime(&timeinfo)) {
-      got_time_at_all = true;
-    } else {
-      slogln("Failed to obtain ntp time.");
-      do_pick_time_source = true;
-    }
+  // gps handling code sets the localtime, so getLocalTime is accurate
+  if (getLocalTime(&timeinfo)) {
+    got_time_at_all = true;
+  } else {
+    slogln("Failed to obtain ntp time.");
+    do_pick_time_source = true;
   }
 }
 
@@ -243,50 +286,127 @@ void update_screen() {
     return;
   }
 
-  if (got_time_at_all == false) {
-    screen_chars[0] = 'A';
-    screen_chars[1] = 'G';
-    screen_chars[2] = 'H';
-  } else {
-    screen_chars[0] = '0' + (timeinfo.tm_hour / 10);
-    screen_chars[1] = '0' + (timeinfo.tm_hour % 10);
-    screen_chars[2] = ':';
-    screen_chars[3] = '0' + (timeinfo.tm_min / 10);
-    screen_chars[4] = '0' + (timeinfo.tm_min % 10);
+  switch (displayed_content) {
+  case TIME: {
+    if (got_time_at_all == false) {
+      screen_chars[0] = 'A';
+      screen_chars[1] = 'G';
+      screen_chars[2] = 'H';
+    } else {
+      screen_chars[0] = '0' + (timeinfo.tm_hour / 10);
+      screen_chars[1] = '0' + (timeinfo.tm_hour % 10);
+      screen_chars[2] = ':';
+      screen_chars[3] = '0' + (timeinfo.tm_min / 10);
+      screen_chars[4] = '0' + (timeinfo.tm_min % 10);
+    }
+    break;
+  }
+  case TEMPERATURE: {
+    if (scd30_data_valid) {
+      itoa((int)temperature, screen_chars, 10);
+      size_t n = strlen(screen_chars);
+      // assume `temperature` isn't longer than 5 chars
+      screen_chars[n] = 'C';
+      screen_chars[n+1] = 0;
+    } else {
+      screen_chars[0] = 'T';
+      screen_chars[1] = 'e';
+      screen_chars[2] = 'm';
+      screen_chars[3] = 'p';
+      screen_chars[4] = '.';
+      screen_chars[5] = 0;
+    }
+    break;
+  }
+  case HUMIDITY: {
+    if (scd30_data_valid) {
+      itoa((int)humidity, screen_chars, 10);
+      size_t n = strlen(screen_chars);
+      screen_chars[n] = '%';
+      screen_chars[n+1] = 0;
+    } else {
+      screen_chars[0] = 'H';
+      screen_chars[1] = '2';
+      screen_chars[2] = 'O';
+      screen_chars[3] = '%';
+      screen_chars[4] = 0;
+    }
+    break;
+  }
+  case CO2: {
+    // flip between both texts
+    if (timeinfo.tm_sec % 10 < 5 && scd30_data_valid) {
+      itoa((int)co2, screen_chars, 10);
+    } else {
+      screen_chars[0] = 'C';
+      screen_chars[1] = 'O';
+      screen_chars[2] = '2';
+      screen_chars[3] = ':';
+      screen_chars[4] = 0;
+    }
+    break;
+  }
   }
 
   clear_screen(&screen_cursor);
 
   int ret = put_string(&screen_cursor, screen_chars);
-  if (ret != 0) {
-    Serial.print("SCREEN ERROR: ");
-    Serial.println(ret);
-  }
+  check_error(ret, "update_screen()");
+
   set_mask(&screen_cursor, 1);
   print_screen(&screen_cursor);
 }
 
 
 
+unsigned long loop_pause_time_ms = 0;
+
+DisplayedContent get_pressed_button() {
+  const int volt_0 = 0;
+  const int volt_0_55 = 500;
+  const int volt_1_1 = 1000;
+  const int volt_2_2 = 2500;
+  const int volt_2_8 = 3500;
+
+  int level = analogRead(36);
+
+  if (volt_0 <= level && level < volt_0_55) {
+    return TIME;
+  } else if (volt_0_55 <= level && level < volt_1_1) { // 0,55-1,1V - button 1
+    return TEMPERATURE;
+  } else if (volt_1_1 <= level && level < volt_2_2) { // 1,1-2,2V - button 2
+    return HUMIDITY;
+  } else if (volt_2_2 <= level && level < volt_2_8) { // 2,2-2,8V - button 3
+    return CO2;
+  } else {
+    // keep the same
+    return displayed_content;
+  }
+}
+
 void loop() {
-  int start = millis();
 
   while (!got_time_at_all) {
     int ret;
     ret = put_string_animation(&screen_cursor, " AGH", 200);
-    if (ret != 0) {
-      Serial.print("[SCREEN ERROR]: ");
-      Serial.println(ret);
-    }
-    
+    check_error(ret, "agh_anim_1");
+
     resolve_time_data();
 
     ret = put_string_animation(&screen_cursor, " AGH", 200, true);
-    if (ret != 0) {
-      Serial.print("[SCREEN ERROR]: ");
-      Serial.println(ret);
-    }
+    check_error(ret, "agh_anim_2");
     resolve_time_data();
+  }
+
+  while (millis() < loop_pause_time_ms) {
+    // poll for screen change
+    DisplayedContent new_content = get_pressed_button();
+    if (new_content != displayed_content) {
+      displayed_content = new_content;
+      break;
+    }
+
+    delay(50);
   }
 
   resolve_time_data();
@@ -301,83 +421,38 @@ void loop() {
 
   update_screen();
   update_oled(got_time_at_all, gps_got_fix, time_source, WiFi.localIP(), co2);
+
   // reset GPS fix state to detect lost signal.
   gps_got_fix = false;
-  delay(min( (10 - (timeinfo.tm_sec % 10)) * 1000 - (millis() - start), (long unsigned int) 10*1000));
-  // delay((60 - timeinfo.tm_sec) * 1000 - (millis() - start));
+  loop_pause_time_ms = millis() + min( (5 - timeinfo.tm_sec % 5) * 1000, (int)5*1000);
 }
 
-
-void update_time_gps() {
+void on_gps_uart_rx() {
   static char gps_cmd_buf[1024];
   size_t n = GPS_UART.readBytesUntil('\n', gps_cmd_buf, 1024);
-
+  gps_cmd_buf[n] = 0;
   if (n == 0) return;
 
-  GPZDA_Data time_data = parse_gps_time_data(gps_cmd_buf, n);
-  // Serial.print("GPS Status: "); Serial.println(time_data.status);
+  GPSTimeUpdateData gps_data = parse_gps_message(gps_cmd_buf, n+1);
+  if (gps_data.is_gpzda == false) return;
 
-  switch(time_data.status) {
-    case NOT_GPZDA: return;
-    case OK_WITH_CHECKSUM: break;
-    case OK_NO_CHECKSUM: break;
-    case ERR_NO_GPS: break;
-    default:
-      Serial.print("GPZDA parse error: ");
-      Serial.println(time_data.status);
-      do_pick_time_source = true;
-      break;
-  }
+  gps_got_fix = gps_data.got_fix;
 
-  #if 0
-  Serial.print("[");
-  Serial.print(n);
-  Serial.print("] Rx: ");
-  for (int i = 0; i < n; i += 1) {
-    Serial.print(gps_cmd_buf[i]);
-  }
-  Serial.print("\n");
-  #endif
+  // ignore - wifi is better
+  if (time_source == NTP) return;
+  
+  do_pick_time_source |= (gps_got_fix == false || gps_data.time_data_valid == false) && time_source == GPS;
 
-  gps_got_fix = (time_data.status != ERR_NO_GPS);
-  if (!gps_got_fix) return;
+  // no time data available
+  if (gps_data.time_data_valid == false) return;
 
-  // prefer wifi time
-  if (time_source == NTP) {
-    return;
-  }
+  if (gps_got_fix == false) return;
 
   got_time_at_all = true;
-  timeinfo.tm_hour = time_data.hour + gmt_offset_sec / 3600;
-  timeinfo.tm_min = time_data.minute;
-  timeinfo.tm_sec = time_data.second;
-
+  // update local time
+  // TODO: Handle error?
   struct timeval tv;
-  tv.tv_sec = mktime(&timeinfo);
+  tv.tv_sec = mktime(&gps_data.utc_timeinfo);
   tv.tv_usec = 0;
   settimeofday(&tv, NULL);
-
-  #if 0
-  Serial.println("Recieved GPZDA data:");
-  Serial.println(time_data.hour);
-  Serial.println(time_data.minute);
-  Serial.println(time_data.second);
-  Serial.println(time_data.millisecond);
-  Serial.println(time_data.day);
-  Serial.println(time_data.month);
-  Serial.println(time_data.year);
-  Serial.println(time_data.timezone);
-  Serial.println(time_data.timezone_min);
-  Serial.println(time_data.checksum);
-  Serial.println("END");
-  #endif
-}
-
-
-void copy_screen_with_mask(int *dst, int *src, int *mask) {
-  for (int x = 0; x < SCREEN_W; x += 1) {
-    for (int y = 0; y < SCREEN_H; y += 1) {
-      dst[SCREEN_W * y + x] = src[SCREEN_W * y + x] & mask[SCREEN_W * y + x];
-    }
-  }
 }

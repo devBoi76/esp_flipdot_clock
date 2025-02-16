@@ -15,6 +15,7 @@ bool try_init_oled(TwoWire &wire) {
   oled.setTextColor(SSD1306_WHITE);
   oled.setCursor(0, 0);
   oled.println(F("Display Init success."));
+  oled.println(F("Waiting for WiFi or GPS..."));
   oled.display();
 
   return true;
@@ -24,28 +25,28 @@ void update_oled(bool got_time_at_all, bool gps_got_fix, TimeSource time_source,
   oled.clearDisplay();
   oled.setCursor(0, 0);
   oled.setTextSize(1);
-  oled.print("IP: ");
+  oled.print(F("IP: "));
   oled.println(ip_addr.toString());
 
   oled.setTextSize(2);
-  oled.print("Czas: ");
+  oled.print(F("Czas: "));
   if (got_time_at_all) {
     switch (time_source) {
-      case GPS: oled.println("GPS"); break;
-      case NTP: oled.println("NTP"); break;
-      case LOCAL: oled.println("ESP"); break;
+      case GPS: oled.println(F("GPS")); break;
+      case NTP: oled.println(F("NTP")); break;
+      case LOCAL: oled.println(F("ESP")); break;
     }
   } else {
-    oled.println("BRAK");
+    oled.println(F("BRAK"));
   }
-  oled.print("FIX: ");
+  oled.print(F("FIX: "));
   if (gps_got_fix) {
-    oled.println("TAK");
+    oled.println(F("TAK"));
   } else {
-    oled.println("NIE");
+    oled.println(F("NIE"));
   }
 
   oled.print((int) co2_ppm);
-  oled.print("ppmCO2");
+  oled.print(F("ppmCO2"));
   oled.display();
 }

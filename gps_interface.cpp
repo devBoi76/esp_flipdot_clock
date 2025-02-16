@@ -2,6 +2,8 @@
 #include "gps_interface.hpp"
 #include <cstdlib>
 #include <cstring>
+#include <Arduino.h>
+#include "util.h"
 
 
 bool starts_with(const char* str, const char* prefix) {
@@ -151,7 +153,7 @@ GPZDA_Data parse_gps_time_data(const char *line, size_t len) {
           if (line[idx] != '.') {
             ret.status = ERR_MALFORMED_TIME;
             return ret;
-          } else { 
+          } else {
             idx += 1;
           }
 
@@ -267,4 +269,46 @@ GPZDA_Data parse_gps_time_data(const char *line, size_t len) {
   }
 }
 
+GPSTimeUpdateData parse_gps_message(const char *message, size_t len) {
+  GPSTimeUpdateData ret;
 
+  GPZDA_Data time_data = parse_gps_time_data(message, len);
+
+  ret.is_gpzda = (time_data.status != NOT_GPZDA);
+  ret.got_fix = (time_data.status != ERR_NO_GPS);
+
+  switch(time_data.status) {
+    case NOT_GPZDA: return ret;
+    case ERR_NO_GPS: return ret;
+    case OK_WITH_CHECKSUM: break;
+    case OK_NO_CHECKSUM: break;
+    // time data, which we care about might be invalid
+    case ERR_MALFORMED_TIME:
+    case ERR_INVALID_CHAR:
+    case ERR_BUFFER_OVERFLOW:
+      slog("[critical] GPZDA parse error: ");
+      slogln(time_data.status);
+      ret.time_data_valid = false;
+      break;
+    // other non-critical errors
+    default:
+      slog("GPZDA parse error: ");
+      slogln(time_data.status);
+      break;
+  }
+
+  ret.utc_timeinfo.tm_hour = time_data.hour;
+  ret.utc_timeinfo.tm_min = time_data.minute;
+  ret.utc_timeinfo.tm_sec = time_data.second;
+
+  if (time_data.status == ERR_INVALID_DAY) return ret;
+  ret.utc_timeinfo.tm_mday = time_data.day;
+
+  if (time_data.status == ERR_INVALID_MONTH) return ret;
+  ret.utc_timeinfo.tm_mon = time_data.month - 1;
+
+  ret.utc_timeinfo.tm_year = time_data.year;
+
+  return ret;
+
+}
