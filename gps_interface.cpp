@@ -269,7 +269,7 @@ GPZDA_Data parse_gps_time_data(const char *line, size_t len) {
   }
 }
 
-extern bool get_debug_log_enable();
+bool get_debug_log_enable() {return true;}
 
 GPSTimeUpdateData parse_gps_message(const char *message, size_t len) {
   #ifdef COMPILE_DEBUG_LOGS
