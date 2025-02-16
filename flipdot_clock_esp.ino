@@ -56,10 +56,8 @@ const int DISPLAY_TRESHOLD = 300;
 
 // debug pin config
 // #define DEBUG_LOG_ENABLE_PIN 0
-const int DEBUG_LOG_ENABLE_PIN = 0;
-bool get_debug_log_enable() {
-  return digitalRead(DEBUG_LOG_ENABLE_PIN) == HIGH;
-}
+
+#define DEBUG_LOG_ENABLE_PIN 0
 
 
 // current co2, temp, and humidity
@@ -100,6 +98,10 @@ DisplayedContent get_pressed_button() {
 }
 
 void on_gps_uart_rx();
+
+bool get_enable_logging() {
+  return (digitalRead(DEBUG_LOG_ENABLE_PIN) == HIGH)
+}
 
 bool try_connect_wifi(const char *ssid, const char *password) {
   if (!wifi_set_correctly) return false;
