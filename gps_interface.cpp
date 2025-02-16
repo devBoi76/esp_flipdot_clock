@@ -269,7 +269,16 @@ GPZDA_Data parse_gps_time_data(const char *line, size_t len) {
   }
 }
 
+extern bool get_debug_log_enable();
+
 GPSTimeUpdateData parse_gps_message(const char *message, size_t len) {
+  #ifdef COMPILE_DEBUG_LOGS
+  if (get_debug_log_enable()) {
+    Serial.print("[GPS debug] : ");
+    Serial.println(message);
+  }
+  #endif
+
   GPSTimeUpdateData ret;
 
   GPZDA_Data time_data = parse_gps_time_data(message, len);
@@ -306,8 +315,9 @@ GPSTimeUpdateData parse_gps_message(const char *message, size_t len) {
 
   if (time_data.status == ERR_INVALID_MONTH) return ret;
   ret.utc_timeinfo.tm_mon = time_data.month - 1;
-
-  ret.utc_timeinfo.tm_year = time_data.year;
+  // struct tm expects years from 1900
+  ret.utc_timeinfo.tm_year = time_data.year - 1900;
+  // Serial.println(&ret.utc_timeinfo, "%Y-%m-%d %H:%M:%S");
 
   return ret;
 
