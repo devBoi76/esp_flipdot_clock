@@ -54,6 +54,13 @@ const int GPS_BAUD_RATE = 9600;
 const int PHOTODIODE = 39;
 const int DISPLAY_TRESHOLD = 300;
 
+// debug pin config
+// #define DEBUG_LOG_ENABLE_PIN 0
+// int enable_logging(void) {
+//   Serial.println("poop");
+  // return 1;
+// }
+#define DEBUG_LOG_ENABLE_PIN 0
 
 
 // current co2, temp, and humidity
@@ -94,6 +101,10 @@ DisplayedContent get_pressed_button() {
 }
 
 void on_gps_uart_rx();
+
+bool get_enable_logging() {
+  return (digitalRead(DEBUG_LOG_ENABLE_PIN) == HIGH)
+}
 
 bool try_connect_wifi(const char *ssid, const char *password) {
   if (!wifi_set_correctly) return false;
@@ -206,6 +217,8 @@ void on_recieve_computer_data() {
 
 void setup() {
   Serial.begin(115200);
+  // init debug pin
+  pinMode(DEBUG_LOG_ENABLE_PIN, INPUT);
   // init screen
   screen_chars[n_screen_chars] = 0;
   init_cursor(&screen_cursor);
