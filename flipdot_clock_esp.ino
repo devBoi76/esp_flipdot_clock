@@ -1,5 +1,6 @@
-#include <Preferences.h>
+#define COMPILE_DEBUG_LOGS
 
+#include <Preferences.h>
 
 #include <Wire.h>
 
@@ -9,7 +10,8 @@
 #include <memory.h>
 #include <WiFi.h>
 #include <Arduino.h>
-
+#include "esp_log.h"
+#include <time.h>
 
 #define SCREEN_H 9
 #define SCREEN_W 28
@@ -29,6 +31,7 @@
 bool wifi_set_correctly = false;
 String wifi_ssid;
 String wifi_password;
+bool wifi_shoud_reconnect = true;
 
 Preferences preferences;
 
@@ -60,51 +63,74 @@ float humidity = -100;
 bool scd30_data_valid = false;
 
 enum DisplayedContent {
-    TIME,
-    TEMPERATURE,
-    HUMIDITY,
-    CO2,
+  TIME,
+  TEMPERATURE,
+  HUMIDITY,
+  CO2,
 };
 DisplayedContent displayed_content = TIME;
 
-void update_time_gps();
+DisplayedContent get_pressed_button() {
+  const int volt_0 = 0;
+  const int volt_0_55 = 500;
+  const int volt_1_1 = 1000;
+  const int volt_2_2 = 2500;
+  const int volt_2_8 = 3500;
+
+  int level = analogRead(36);
+
+  if (volt_0 <= level && level < volt_0_55) {
+    return TIME;
+  } else if (volt_0_55 <= level && level < volt_1_1) { // 0,55-1,1V - button 1
+    return TEMPERATURE;
+  } else if (volt_1_1 <= level && level < volt_2_2) { // 1,1-2,2V - button 2
+    return HUMIDITY;
+  } else if (volt_2_2 <= level && level < volt_2_8) { // 2,2-2,8V - button 3
+    return CO2;
+  } else {
+    // keep the same
+    return displayed_content;
+  }
+}
+
+void on_gps_uart_rx();
 
 bool try_connect_wifi(const char *ssid, const char *password) {
-  if (!wifi_set_correctly) {
-    return false;
-  }
+  if (!wifi_set_correctly) return false;
 
-  Serial.print("SSID: ");
+  if (wifi_shoud_reconnect == false && WiFi.isConnected()) return true;
+
+  WiFi.disconnect();
+  delay(100);
+
+  Serial.print("[WiFi] SSID: ");
   Serial.println(ssid);
-  Serial.print("Password: ");
+  Serial.print("[WiFi] Password: ");
   Serial.println(password);
 
-  if (WiFi.isConnected()) {
-    WiFi.disconnect();
-  }
-
-  
-
   WiFi.begin(ssid, password);
-  Serial.println("Connecting to WiFi...");
+  Serial.println("[WiFi] Connecting...");
+
   while (true) {
 
     switch(WiFi.status()) {
       case WL_CONNECTED:
-        Serial.println("Connected");
+        Serial.println("[WiFi] Connected");
         Serial.print("Local IP: ");
         Serial.println(WiFi.localIP());
+        wifi_shoud_reconnect = false;
         time_source = NTP;
         return true;
       case WL_NO_SSID_AVAIL:
-        Serial.print("Error: wifi SSID not found:\t`");
+        Serial.print("[Wifi] Error: wifi SSID not found:\t`");
         Serial.print(ssid);
         Serial.println('`');
+        WiFi.disconnect();
         time_source = GPS;
         return false;
       case WL_CONNECT_FAILED:
       case WL_CONNECTION_LOST:
-        Serial.println("WiFi connection failed. retrying");
+        Serial.println("[WiFi] Connection failed. retrying");
         WiFi.disconnect();
         WiFi.begin(ssid, password);
         break;
@@ -171,6 +197,7 @@ void on_recieve_computer_data() {
     preferences.end();
 
     do_pick_time_source = true;
+    wifi_shoud_reconnect = true;
     // } else wifi_set_correctly = false;
   }
 
@@ -201,6 +228,8 @@ void setup() {
   WiFi.disconnect();
   time_source = try_connect_wifi(wifi_ssid.c_str(), wifi_password.c_str()) ? NTP : LOCAL;
   config_state = NONE;
+  // disable wifi spam
+  esp_log_level_set("wifi", ESP_LOG_NONE);
 
   // init gps
   GPS_UART.begin(GPS_BAUD_RATE, SERIAL_8N1, RXD2, TXD2);
@@ -361,29 +390,6 @@ void update_screen() {
 
 unsigned long loop_pause_time_ms = 0;
 
-DisplayedContent get_pressed_button() {
-  const int volt_0 = 0;
-  const int volt_0_55 = 500;
-  const int volt_1_1 = 1000;
-  const int volt_2_2 = 2500;
-  const int volt_2_8 = 3500;
-
-  int level = analogRead(36);
-
-  if (volt_0 <= level && level < volt_0_55) {
-    return TIME;
-  } else if (volt_0_55 <= level && level < volt_1_1) { // 0,55-1,1V - button 1
-    return TEMPERATURE;
-  } else if (volt_1_1 <= level && level < volt_2_2) { // 1,1-2,2V - button 2
-    return HUMIDITY;
-  } else if (volt_2_2 <= level && level < volt_2_8) { // 2,2-2,8V - button 3
-    return CO2;
-  } else {
-    // keep the same
-    return displayed_content;
-  }
-}
-
 void loop() {
 
   while (!got_time_at_all) {
@@ -444,7 +450,10 @@ void on_gps_uart_rx() {
   do_pick_time_source |= (gps_got_fix == false || gps_data.time_data_valid == false) && time_source == GPS;
 
   // no time data available
-  if (gps_data.time_data_valid == false) return;
+  if (gps_data.time_data_valid == false) {
+    Serial.println("[GPS] Data invalid!");
+    return;
+  }
 
   if (gps_got_fix == false) return;
 
@@ -452,7 +461,8 @@ void on_gps_uart_rx() {
   // update local time
   // TODO: Handle error?
   struct timeval tv;
-  tv.tv_sec = mktime(&gps_data.utc_timeinfo);
+  tv.tv_sec = my_timegm(&gps_data.utc_timeinfo);
   tv.tv_usec = 0;
+  Serial.println((uint64_t)tv.tv_sec);
   settimeofday(&tv, NULL);
 }
