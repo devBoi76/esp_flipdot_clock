@@ -29,7 +29,7 @@ void update_oled(bool got_time_at_all, bool gps_got_fix, TimeSource time_source,
   oled.println(ip_addr.toString());
 
   oled.setTextSize(2);
-  oled.print(F("Czas: "));
+  oled.print(F("Time: "));
   if (got_time_at_all) {
     switch (time_source) {
       case GPS: oled.println(F("GPS")); break;
@@ -37,13 +37,13 @@ void update_oled(bool got_time_at_all, bool gps_got_fix, TimeSource time_source,
       case LOCAL: oled.println(F("ESP")); break;
     }
   } else {
-    oled.println(F("BRAK"));
+    oled.println(F("NONE"));
   }
   oled.print(F("FIX: "));
   if (gps_got_fix) {
-    oled.println(F("TAK"));
+    oled.println(F("YES"));
   } else {
-    oled.println(F("NIE"));
+    oled.println(F("NO"));
   }
 
   oled.print((int) co2_ppm);

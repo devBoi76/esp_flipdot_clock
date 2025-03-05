@@ -70,22 +70,29 @@ enum DisplayedContent {
 };
 DisplayedContent displayed_content = TIME;
 
+#define DISPLAY_CONTROL_PIN 36
+
 DisplayedContent get_pressed_button() {
   const int volt_0 = 0;
-  const int volt_0_55 = 500;
+  const int volt_0_55 = 350;
   const int volt_1_1 = 1000;
-  const int volt_2_2 = 2500;
-  const int volt_2_8 = 3500;
+  const int volt_2_2 = 2000;
+  const int volt_2_8 = 3000;
 
-  int level = analogRead(36);
+  int level = analogRead(DISPLAY_CONTROL_PIN);
+  
 
   if (volt_0 <= level && level < volt_0_55) {
+    Serial.println(level);
     return TIME;
   } else if (volt_0_55 <= level && level < volt_1_1) { // 0,55-1,1V - button 1
+  Serial.println(level);
     return TEMPERATURE;
   } else if (volt_1_1 <= level && level < volt_2_2) { // 1,1-2,2V - button 2
+  Serial.println(level);
     return HUMIDITY;
   } else if (volt_2_2 <= level && level < volt_2_8) { // 2,2-2,8V - button 3
+  Serial.println(level);
     return CO2;
   } else {
     // keep the same

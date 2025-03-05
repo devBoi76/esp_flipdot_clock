@@ -36,6 +36,7 @@ bool try_init_scd30_sensor(TwoWire &wire) {
 
   scd30_err = scd30.startPeriodicMeasurement(0);
   scd30.setMeasurementInterval(2);
+  scd30.activateAutoCalibration(1);
 
   if (scd30_err != NO_ERROR) {
     print_scd30_error(scd30_err, "startPeriodicMeasurement()");
