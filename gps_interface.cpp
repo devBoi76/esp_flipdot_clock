@@ -269,14 +269,14 @@ GPZDA_Data parse_gps_time_data(const char *line, size_t len) {
   }
 }
 
-extern bool get_debug_log_enable();
+// extern bool get_debug_log_enable();
 
 GPSTimeUpdateData parse_gps_message(const char *message, size_t len) {
 
-  if (get_debug_log_enable()) {
-    Serial.print("[GPS debug] : ");
-    Serial.println(message);
-  }
+  // if (get_debug_log_enable()) {
+  //   Serial.print("[GPS debug] : ");
+  //   Serial.println(message);
+  // }
 
 
   GPSTimeUpdateData ret;

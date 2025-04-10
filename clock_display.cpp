@@ -39,7 +39,7 @@ int put_char(screen_cursor_t *cur, char c) {
   const font_char_t* fnt = get_char_font(c);
   if (fnt == 0) return ERR_NO_CHAR_FONT;
 
-  if (cur->x + fnt->advance >= SCREEN_W) return ERR_OVERFLOW;
+  if (cur->x + fnt->advance > SCREEN_W) return ERR_OVERFLOW;
 
   for (size_t y = 0; y < CHAR_H; y += 1) {
     for (size_t x = 0; x < fnt->advance; x += 1) {
@@ -95,8 +95,10 @@ int put_string_animation(screen_cursor_t *cur, const char *str, uint32_t delay_m
 }
 
 
+void flipdot_write_screen(screen_cursor_t *cur);
 
 void print_screen(screen_cursor_t *cur) {
+  flipdot_write_screen(cur);
   for (int y = 0; y < SCREEN_H; y += 1) {
     for (int x = 0; x < SCREEN_W; x += 1) {
       if (cur->scr[y*SCREEN_W+x] & cur->scr_mask[y*SCREEN_W+x] == 1)

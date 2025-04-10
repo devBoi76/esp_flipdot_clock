@@ -208,6 +208,39 @@ const font_char_t font_space = {
   }
 };
 
+const font_char_t font_long_space = {
+  .advance = 5,
+  .gap = CHAR_GAP,
+  .data = (const uint8_t[]){
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0
+  }
+};
+
+const font_char_t font_short_space = {
+  .advance = 1,
+  .gap = 0,
+  .data = (const uint8_t[]){
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  }
+};
+
+
 const font_char_t font_e = {
   .advance = 5,
   .gap = 1,
@@ -426,6 +459,8 @@ const font_char_t* get_char_font(char c) {
     case 'm': ret = &font_m; break;
     case 'p': ret = &font_p; break;
     case ' ': ret = &font_space; break;
+    case '_': ret = &font_long_space; break;
+    case '\'': ret = &font_short_space; break;
     case 'A': ret = &font_BIG_A; break;
     case 'C': ret = &font_BIG_C; break;
     case 'G': ret = &font_BIG_G; break;

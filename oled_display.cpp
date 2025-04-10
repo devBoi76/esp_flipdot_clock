@@ -46,7 +46,7 @@ void update_oled(bool got_time_at_all, bool gps_got_fix, TimeSource time_source,
     oled.println(F("NO"));
   }
 
+  oled.print(F("CO2: "));
   oled.print((int) co2_ppm);
-  oled.print(F("ppmCO2"));
   oled.display();
 }

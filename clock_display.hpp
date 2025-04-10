@@ -24,7 +24,7 @@ typedef struct {
 // screen config
 inline screen_cursor_t screen_cursor;
 
-inline const int n_screen_chars = 5;
+inline const int n_screen_chars = 10;
 inline char screen_chars[n_screen_chars+1];
 
 
