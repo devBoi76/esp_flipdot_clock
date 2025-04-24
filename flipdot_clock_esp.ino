@@ -326,6 +326,8 @@ void print_help() {
   slogln("    Then type in: wifi SSID, enter, wifi Password, enter");
 }
 
+#define PHOTODIODE 39
+#define DISPLAY_TRESHOLD 300
 void update_screen() {
   if (!wifi_set_correctly) { slogln("WiFi not configured. Type `configure`."); }
 
@@ -337,106 +339,108 @@ void update_screen() {
   slog("Got GPS fix?: ");
   slogln(gps_got_fix == true);
 
-  // int light_level = analogRead(PHOTODIODE);
-  // if (light_level < DISPLAY_TRESHOLD) {
-  //   slog("Light too low to update screen.");
-  //   return;
-  // }
-
-  switch (displayed_content) {
-  case TIME: {
-    if (got_time_at_all == false) {
-      screen_chars[0] = 'A';
-      screen_chars[1] = 'G';
-      screen_chars[2] = 'H';
-    } else {
-      if (timeinfo.tm_hour / 10 == 0) {
-        screen_chars[0] = '_';
+  int light_level = analogRead(PHOTODIODE);
+  if (light_level < DISPLAY_TRESHOLD) {
+    slog("Light too low to update screen.");
+    screen_chars[0] = ' ';
+    screen_chars[1] = '(';
+    screen_chars[2] = 'Z';
+  } else {
+    switch (displayed_content) {
+    case TIME: {
+      if (got_time_at_all == false) {
+        screen_chars[0] = 'A';
+        screen_chars[1] = 'G';
+        screen_chars[2] = 'H';
       } else {
-        screen_chars[0] = '0' + (timeinfo.tm_hour / 10);
+        if (timeinfo.tm_hour / 10 == 0) {
+          screen_chars[0] = '_';
+        } else {
+          screen_chars[0] = '0' + (timeinfo.tm_hour / 10);
+        }
+        screen_chars[1] = '0' + (timeinfo.tm_hour % 10);
+        screen_chars[2] = ':';
+        screen_chars[3] = '0' + (timeinfo.tm_min / 10);
+        screen_chars[4] = '0' + (timeinfo.tm_min % 10);
       }
-      screen_chars[1] = '0' + (timeinfo.tm_hour % 10);
-      screen_chars[2] = ':';
-      screen_chars[3] = '0' + (timeinfo.tm_min / 10);
-      screen_chars[4] = '0' + (timeinfo.tm_min % 10);
+      break;
     }
-    break;
-  }
-  case TEMPERATURE: {
-    if (scd30_data_valid) {
-      screen_chars[0] = '\'';
-      screen_chars[1] = '\'';
-      screen_chars[2] = '\'';
-      screen_chars[3] = '\'';
-      screen_chars[4] = '\'';
-      itoa((int)temperature, screen_chars+5, 10);
-      size_t n = strlen(screen_chars);
-      // assume `temperature` isn't longer than 5 chars
-      screen_chars[n] = 'C';
-      screen_chars[n+1] = 0;
-    } else {
-      screen_chars[0] = '\'';
-      screen_chars[1] = '\'';
-      screen_chars[2] = '\'';
-      screen_chars[3] = '\'';
-      screen_chars[4] = '\'';
-      screen_chars[5] = 'T';
-      screen_chars[6] = 'e';
-      screen_chars[7] = 'm';
-      screen_chars[8] = 'p';
-      screen_chars[9] = '.';
-      screen_chars[10] = 0;
+    case TEMPERATURE: {
+      if (scd30_data_valid) {
+        screen_chars[0] = '\'';
+        screen_chars[1] = '\'';
+        screen_chars[2] = '\'';
+        screen_chars[3] = '\'';
+        screen_chars[4] = '\'';
+        itoa((int)temperature, screen_chars+5, 10);
+        size_t n = strlen(screen_chars);
+        // assume `temperature` isn't longer than 5 chars
+        screen_chars[n] = 'C';
+        screen_chars[n+1] = 0;
+      } else {
+        screen_chars[0] = '\'';
+        screen_chars[1] = '\'';
+        screen_chars[2] = '\'';
+        screen_chars[3] = '\'';
+        screen_chars[4] = '\'';
+        screen_chars[5] = 'T';
+        screen_chars[6] = 'e';
+        screen_chars[7] = 'm';
+        screen_chars[8] = 'p';
+        screen_chars[9] = '.';
+        screen_chars[10] = 0;
+      }
+      break;
     }
-    break;
-  }
-  case HUMIDITY: {
-    if (scd30_data_valid) {
-      screen_chars[0] = '\'';
-      screen_chars[1] = '\'';
-      screen_chars[2] = '\'';
-      screen_chars[3] = '\'';
-      screen_chars[4] = '\'';
-      itoa((int)humidity, screen_chars+5, 10);
-      size_t n = strlen(screen_chars);
-      screen_chars[n] = '%';
-      screen_chars[n+1] = 0;
-    } else {
-      screen_chars[0] = '\'';
-      screen_chars[1] = '\'';
-      screen_chars[2] = '\'';
-      screen_chars[3] = '\'';
-      screen_chars[4] = '\'';
-      screen_chars[5] = 'H';
-      screen_chars[6] = '2';
-      screen_chars[7] = 'O';
-      screen_chars[8] = '%';
-      screen_chars[9] = 0;
+    case HUMIDITY: {
+      if (scd30_data_valid) {
+        screen_chars[0] = '\'';
+        screen_chars[1] = '\'';
+        screen_chars[2] = '\'';
+        screen_chars[3] = '\'';
+        screen_chars[4] = '\'';
+        itoa((int)humidity, screen_chars+5, 10);
+        size_t n = strlen(screen_chars);
+        screen_chars[n] = '%';
+        screen_chars[n+1] = 0;
+      } else {
+        screen_chars[0] = '\'';
+        screen_chars[1] = '\'';
+        screen_chars[2] = '\'';
+        screen_chars[3] = '\'';
+        screen_chars[4] = '\'';
+        screen_chars[5] = 'H';
+        screen_chars[6] = '2';
+        screen_chars[7] = 'O';
+        screen_chars[8] = '%';
+        screen_chars[9] = 0;
+      }
+      break;
     }
-    break;
-  }
-  case CO2: {
-    // flip between both texts
-    if (timeinfo.tm_sec % 10 < 5 && scd30_data_valid) {
-      screen_chars[0] = '\'';
-      screen_chars[1] = '\'';
-      screen_chars[2] = '\'';
-      screen_chars[3] = '\'';
-      screen_chars[4] = '\'';
-      itoa((int)co2, screen_chars+5, 10);
-    } else {
-      screen_chars[0] = '\'';
-      screen_chars[1] = '\'';
-      screen_chars[2] = '\'';
-      screen_chars[3] = '\'';
-      screen_chars[4] = '\'';
-      screen_chars[5] = 'C';
-      screen_chars[6] = 'O';
-      screen_chars[7] = '2';
-      screen_chars[8] = ':';
-      screen_chars[9] = 0;
+    case CO2: {
+      // flip between both texts
+      if (timeinfo.tm_sec % 10 < 5 && scd30_data_valid) {
+        screen_chars[0] = '\'';
+        screen_chars[1] = '\'';
+        screen_chars[2] = '\'';
+        screen_chars[3] = '\'';
+        screen_chars[4] = '\'';
+        itoa((int)co2, screen_chars+5, 10);
+      } else {
+        screen_chars[0] = '\'';
+        screen_chars[1] = '\'';
+        screen_chars[2] = '\'';
+        screen_chars[3] = '\'';
+        screen_chars[4] = '\'';
+        screen_chars[5] = 'C';
+        screen_chars[6] = 'O';
+        screen_chars[7] = '2';
+        screen_chars[8] = ':';
+        screen_chars[9] = 0;
+      }
+      break;
     }
-    break;
-  }
+    }
   }
 
   clear_screen(&screen_cursor);

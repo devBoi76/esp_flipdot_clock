@@ -69,15 +69,15 @@ void flipdot_init() {
     digitalWrite(CLK_PIN, HIGH);
 
     init_cursor(&bad_pixels);
-    bad_pixels.scr[8 * SCREEN_W + 0] = 1;
-    bad_pixels.scr[3 * SCREEN_W + 2] = 1;
-    bad_pixels.scr[0 * SCREEN_W + 6] = 1;
-    bad_pixels.scr[1 * SCREEN_W + 13] = 1;
-    bad_pixels.scr[6 * SCREEN_W + 16] = 1;
-    bad_pixels.scr[4 * SCREEN_W + 20] = 1;
-    bad_pixels.scr[3 * SCREEN_W + 20] = 1;
-    bad_pixels.scr[2 * SCREEN_W + 20] = 1;
-    bad_pixels.scr[3 * SCREEN_W + 21] = 1;
+    // bad_pixels.scr[8 * SCREEN_W + 0] = 1;
+    // bad_pixels.scr[3 * SCREEN_W + 2] = 1;
+    // bad_pixels.scr[0 * SCREEN_W + 6] = 1;
+    // bad_pixels.scr[1 * SCREEN_W + 13] = 1;
+    // bad_pixels.scr[6 * SCREEN_W + 16] = 1;
+    // bad_pixels.scr[4 * SCREEN_W + 20] = 1;
+    // bad_pixels.scr[3 * SCREEN_W + 20] = 1;
+    // bad_pixels.scr[2 * SCREEN_W + 20] = 1;
+    // bad_pixels.scr[3 * SCREEN_W + 21] = 1;
   
     init_cursor(&last_screen);
 }

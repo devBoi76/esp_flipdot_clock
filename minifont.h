@@ -439,6 +439,38 @@ const font_char_t font_null = {
   .data = (const uint8_t[]){},
 };
 
+const font_char_t font_moon = {
+  .advance = 7,
+  .gap = 1,
+  .data = (const uint8_t[]) {
+     0, 0, 1, 1, 1, 1, 0,
+     0, 1, 1, 1, 1, 0, 1,
+     1, 1, 1, 1, 0, 0, 0,
+     1, 1, 1, 0, 0, 0, 0,
+     1, 1, 1, 0, 0, 0, 0,
+     1, 1, 1, 0, 0, 0, 0,
+     1, 1, 1, 1, 0, 0, 1,
+     0, 1, 1, 1, 1, 0, 1,
+     0, 0, 1, 1, 1, 1, 0,
+  }
+};
+
+const font_char_t font_zzz = {
+  .advance = 11,
+  .gap = 1,
+  .data = (const uint8_t[]) {
+    0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,1,1,1,
+    0,0,0,0,1,1,1,0,0,0,1,
+    1,1,1,0,0,0,1,0,0,1,0,
+    0,0,1,0,0,1,0,0,1,0,0,
+    0,1,0,0,1,0,0,0,1,1,1,
+    1,0,0,0,1,1,1,0,0,0,0,
+    1,1,1,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,
+  }
+};
+
 // returns null if not found
 const font_char_t* get_char_font(char c) {
   const font_char_t *ret = 0;
@@ -470,6 +502,8 @@ const font_char_t* get_char_font(char c) {
     case '|': ret = &font_bar; break;
     case '%': ret = &font_percent; break;
     case '.': ret = &font_dot; break;
+    case '(': ret = &font_moon; break;
+    case 'Z': ret = &font_zzz; break;
   }
 
   return ret;
