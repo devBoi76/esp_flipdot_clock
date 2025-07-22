@@ -1,7 +1,5 @@
 #include <Preferences.h>
-
 #include <Wire.h>
-
 #include <ctime>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,10 +22,6 @@
 #include "flipdot_interface.hpp"
 #include "config.hpp"
 
-// wifi config
-// #define SSID_PREF "ssid"
-// #define PASS_PREF "password"
-
 bool wifi_set_correctly = false;
 String wifi_ssid;
 String wifi_password;
@@ -48,12 +42,6 @@ const int TXD2 = 0;
 const int GPS_BAUD_RATE = 9600;
 #define GPS_UART Serial2
 
-
-
-// debug pin config
-// #define DEBUG_LOG_ENABLE_PIN 16
-
-
 // current co2, temp, and humidity
 float co2 = -100;
 float temperature = -100;
@@ -67,8 +55,6 @@ enum DisplayedContent {
   CO2,
 };
 DisplayedContent displayed_content = TIME;
-
-// #define DISPLAY_CONTROL_PIN 36
 
 DisplayedContent get_pressed_button() {
   const int volt_0 = 0;      // 0
@@ -99,10 +85,6 @@ DisplayedContent get_pressed_button() {
 }
 
 void on_gps_uart_rx();
-
-// bool get_debug_log_enable() {
-//   return digitalRead(DEBUG_LOG_ENABLE_PIN) == HIGH;
-// }
 
 bool try_connect_wifi(const char *ssid, const char *password) {
   if (!wifi_set_correctly) return false;
@@ -327,8 +309,6 @@ void print_help() {
   slogln("    Then type in: wifi SSID, enter, wifi Password, enter");
 }
 
-// #define PHOTODIODE 39
-// #define DISPLAY_TRESHOLD 300
 void update_screen() {
   if (!wifi_set_correctly) { slogln("WiFi not configured. Type `configure`."); }
 

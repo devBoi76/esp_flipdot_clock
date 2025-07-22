@@ -11,19 +11,6 @@ bool starts_with(const char* str, const char* prefix) {
     return *prefix == 0;
 }
 
-// // check if string starts with other string
-// bool starts_with(const char *str, size_t str_len, const char *start, const char start_len) {
-//   if (start_len > str_len) return false;
-
-//   while (*start != 0) {
-//     if (*str != *start) return false;
-//     str++;
-//     start++;
-
-//   }
-//   return true;
-// }
-
 typedef struct {
   GPZDA_Status status;
   int number;
@@ -268,8 +255,6 @@ GPZDA_Data parse_gps_time_data(const char *line, size_t len) {
     }
   }
 }
-
-// extern bool get_debug_log_enable();
 
 GPSTimeUpdateData parse_gps_message(const char *message, size_t len) {
 
