@@ -258,11 +258,6 @@ GPZDA_Data parse_gps_time_data(const char *line, size_t len) {
 
 GPSTimeUpdateData parse_gps_message(const char *message, size_t len) {
 
-  // if (get_debug_log_enable()) {
-  //   Serial.print("[GPS debug] : ");
-  //   Serial.println(message);
-  // }
-
 
   GPSTimeUpdateData ret;
 
@@ -302,7 +297,6 @@ GPSTimeUpdateData parse_gps_message(const char *message, size_t len) {
   ret.utc_timeinfo.tm_mon = time_data.month - 1;
   // struct tm expects years from 1900
   ret.utc_timeinfo.tm_year = time_data.year - 1900;
-  // Serial.println(&ret.utc_timeinfo, "%Y-%m-%d %H:%M:%S");
 
   return ret;
 

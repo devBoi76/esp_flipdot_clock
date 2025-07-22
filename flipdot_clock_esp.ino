@@ -196,11 +196,7 @@ void on_recieve_computer_data() {
 }
 
 void init_wire() {
-  // if (!Wire.begin(5, 4, 50000)) {
-  //   Serial.println("[Wire] init failed.");
-  // } else {
-  //   Serial.println("[Wire] init success.");
-  // }
+
   // init oled
   if (!try_init_oled(Wire)) {
     Serial.println("[OLED] init failed.");
@@ -219,13 +215,10 @@ void init_wire() {
 
 void setup() {
   Serial.begin(115200);
-  // init debug pin
-  //pinMode(DEBUG_LOG_ENABLE_PIN, INPUT);
-
 
   // flipdot
   flipdot_init();
-  
+
   // init screen
   screen_chars[n_screen_chars] = 0;
   init_cursor(&screen_cursor);
@@ -320,8 +313,8 @@ void update_screen() {
   slog("Got GPS fix?: ");
   slogln(gps_got_fix == true);
 
-  int light_level = analogRead(PHOTODIODE); 
-  
+  int light_level = analogRead(PHOTODIODE);
+
   if (light_level > 2000) { // 2.5V is high level. More than 2000 should be ok.
     slog("Light too low to update screen.");
     screen_chars[0] = ' ';
@@ -360,11 +353,6 @@ void update_screen() {
         screen_chars[n] = 'C';
         screen_chars[n+1] = 0;
       } else {
-        // screen_chars[0] = '\'';
-        // screen_chars[1] = '\'';
-        // screen_chars[2] = '\'';
-        // screen_chars[3] = '\'';
-        // screen_chars[4] = '\'';
         screen_chars[0] = 'T';
         screen_chars[1] = 'e';
         screen_chars[2] = 'm';
@@ -391,7 +379,6 @@ void update_screen() {
         screen_chars[2] = '\'';
         screen_chars[3] = '\'';
         screen_chars[4] = '\'';
-        // screen_chars[5] = '\'';
         screen_chars[5] = 'R';
         screen_chars[6] = 'H';
         screen_chars[7] = '%';
@@ -405,8 +392,6 @@ void update_screen() {
         screen_chars[0] = '\'';
         screen_chars[1] = '\'';
         screen_chars[2] = '\'';
-        // screen_chars[3] = '\'';
-        // screen_chars[4] = '\'';
         itoa((int)co2, screen_chars+3, 10);
       } else {
         screen_chars[0] = '\'';
@@ -495,7 +480,7 @@ void on_gps_uart_rx() {
 
   // ignore - wifi is better
   if (time_source == NTP) return;
-  
+
   do_pick_time_source |= (gps_got_fix == false || gps_data.time_data_valid == false) && time_source == GPS;
 
   // no time data available
@@ -512,9 +497,5 @@ void on_gps_uart_rx() {
   struct timeval tv;
   tv.tv_sec = my_timegm(&gps_data.utc_timeinfo);
   tv.tv_usec = 0;
-  // if (get_debug_log_enable()) {
-  //   Serial.print("[GPS debug] Timestamp: ");
-  //   Serial.println((uint64_t)tv.tv_sec);
-  // }
   settimeofday(&tv, NULL);
 }

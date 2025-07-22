@@ -21,7 +21,6 @@ typedef struct {
   uint8_t scr_mask[SCREEN_SZ];
 } screen_cursor_t;
 
-// screen config
 inline screen_cursor_t screen_cursor;
 
 inline const int n_screen_chars = 10;
@@ -46,4 +45,3 @@ void clear_screen(screen_cursor_t *cur);
 void set_mask(screen_cursor_t *cur, uint8_t val);
 
 bool check_error(int screen_error, const char *tag);
-

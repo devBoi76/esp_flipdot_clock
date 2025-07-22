@@ -492,7 +492,6 @@ const font_char_t font_zzz = {
 const font_char_t* get_char_font(char c) {
   const font_char_t *ret = 0;
   switch(c) {
-    // case '\0': ret = &font_null; break;
     case '0': ret = &font_zero; break;
     case '1': ret = &font_one; break;
     case '2': ret = &font_two; break;

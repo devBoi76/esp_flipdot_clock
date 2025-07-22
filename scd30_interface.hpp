@@ -7,10 +7,7 @@
 inline SensirionI2cScd30 scd30;
 inline int16_t scd30_err;
 inline bool scd30_init_success = false;
-// #define SCD30_SDA 12
-// #define SCD30_SCL 14
-// #define SCD30_SDA 5
-// #define SCD30_SCL 4
+
 
 
 void print_scd30_error(int16_t scd30_err, const char* tag);

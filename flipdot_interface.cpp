@@ -65,16 +65,7 @@ void flipdot_init() {
     digitalWrite(CLK_PIN, HIGH);
 
     init_cursor(&bad_pixels);
-    // bad_pixels.scr[8 * SCREEN_W + 0] = 1;
-    // bad_pixels.scr[3 * SCREEN_W + 2] = 1;
-    // bad_pixels.scr[0 * SCREEN_W + 6] = 1;
-    // bad_pixels.scr[1 * SCREEN_W + 13] = 1;
-    // bad_pixels.scr[6 * SCREEN_W + 16] = 1;
-    // bad_pixels.scr[4 * SCREEN_W + 20] = 1;
-    // bad_pixels.scr[3 * SCREEN_W + 20] = 1;
-    // bad_pixels.scr[2 * SCREEN_W + 20] = 1;
-    // bad_pixels.scr[3 * SCREEN_W + 21] = 1;
-  
+
     init_cursor(&last_screen);
 }
 
@@ -85,24 +76,14 @@ void flipdot_pulse_clk() {
     delayMicroseconds(50);
 }
 void flipdot_write_byte(uint8_t data) {
-  //Serial.print("WRITE_BYTE: ");
-  //Serial.print(data);
-  //Serial.print("\t");
-
   for (size_t i = 0; i < 8; i += 1) {
-    
+
     // invert
     digitalWrite(DATA_PIN, !(data & 0b10000000));
-    // Serial.print((data & 0b10000000) != 0);
      data = data << 1;
 
-    //digitalWrite(DATA_PIN, !(data & 0b1));
-    //Serial.print((data & 0b1) != 0);
-    //data = data >> 1;
-    
     flipdot_pulse_clk();
   }
-  // Serial.println("");
 }
 
 #define DATA_HIGH (0b01000000)
@@ -126,12 +107,12 @@ uint8_t flipdot_get_word(uint8_t chip_addr, bool data) {
 void flipdot_set_pixel(uint8_t addr_x, uint8_t addr_y, bool state) {
   flipdot_write_byte(flipdot_get_word(addr_x, !state));
   flipdot_write_byte(flipdot_get_word(addr_y, state));
-  
+
   digitalWrite(LOAD_PIN, LOW);
   delayMicroseconds(50);
   digitalWrite(LOAD_PIN, HIGH);
   delayMicroseconds(50);
-  
+
   digitalWrite(EN_PIN, LOW);
   delayMicroseconds(1000);
   digitalWrite(EN_PIN, HIGH);
@@ -147,13 +128,6 @@ void flipdot_set_pixel_xy(uint8_t x, uint8_t y, bool state) {
 }
 
 void flipdot_write_screen(screen_cursor_t *cur) {
-  // for (int D = 1; D >= 0; D -= 1) {
-  //   for (int y = 0; y < SCREEN_H; y += 1) {
-  //     for (int x = 0; x < SCREEN_W; x += 1) {
-  //       flipdot_set_pixel_xy(x, y, D);
-  //     }
-  //   }
-  // }
 
   for (int y = 0; y < SCREEN_H; y += 1) {
     for (int x = 0; x < SCREEN_W; x += 1) {
