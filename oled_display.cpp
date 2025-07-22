@@ -1,5 +1,5 @@
 #include "oled_display.hpp"
-#include "pinouts.hpp"
+#include "config.hpp"
 
 bool try_init_oled(TwoWire &wire) {
   Serial.println("[OLED] init...");

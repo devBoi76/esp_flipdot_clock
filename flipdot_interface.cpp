@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "flipdot_interface.hpp"
 #include "util.h"
-#include "pinouts.hpp"
+#include "config.hpp"
 
 // #define DATA_PIN 26
 // #define CLK_PIN 25

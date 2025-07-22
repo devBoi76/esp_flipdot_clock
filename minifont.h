@@ -352,6 +352,23 @@ const font_char_t font_BIG_H = {
   }
 };
 
+
+const font_char_t font_BIG_R = {
+  .advance = 5,
+  .gap = CHAR_GAP,
+  .data = (const uint8_t[]){
+    1, 1, 1, 1, 0,
+    1, 0, 0, 0, 1,
+    1, 0, 0, 0, 1,
+    1, 0, 0, 0, 1,
+    1, 1, 1, 1, 0,
+    1, 1, 0, 0, 0,
+    1, 0, 1, 0, 0,
+    1, 0, 0, 1, 0,
+    1, 0, 0, 0, 1,
+  }
+};
+
 const font_char_t font_BIG_O = {
   .advance = 5,
   .gap = 1,
@@ -497,6 +514,7 @@ const font_char_t* get_char_font(char c) {
     case 'C': ret = &font_BIG_C; break;
     case 'G': ret = &font_BIG_G; break;
     case 'H': ret = &font_BIG_H; break;
+    case 'R': ret = &font_BIG_R; break;
     case 'O': ret = &font_BIG_O; break;
     case 'T': ret = &font_BIG_T; break;
     case '|': ret = &font_bar; break;

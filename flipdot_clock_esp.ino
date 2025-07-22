@@ -22,7 +22,7 @@
 #include "scd30_interface.hpp"
 #include "oled_display.hpp"
 #include "flipdot_interface.hpp"
-#include "pinouts.hpp"
+#include "config.hpp"
 
 // wifi config
 // #define SSID_PREF "ssid"
@@ -35,9 +35,9 @@ bool wifi_shoud_reconnect = true;
 
 Preferences preferences;
 
-const char *ntpServer = "pool.ntp.org";
+const char *ntpServer = NTP_SERVER;
 
-const char *timezone_code_CET = "CET-1CEST,M3.5.0,M10.5.0/3";
+const char *timezone_code_CET = TIMEZONE;
 
 // uart config
 const int RXD1 = 22;
@@ -71,14 +71,14 @@ DisplayedContent displayed_content = TIME;
 // #define DISPLAY_CONTROL_PIN 36
 
 DisplayedContent get_pressed_button() {
-  const int volt_0 = 0;
-  const int volt_0_55 = 350;
-  const int volt_1_1 = 1000;
-  const int volt_2_2 = 2000;
-  const int volt_2_8 = 3000;
+  const int volt_0 = 0;      // 0
+  const int volt_0_55 = 350; // 1800
+  const int volt_1_1 = 2000; // 2259
+  const int volt_2_2 = 2700; // 2910
+  const int volt_2_8 = 3200;
 
   int level = analogRead(DISPLAY_CONTROL_PIN);
-  Serial.println(level);
+  // Serial.println(level);
 
   if (volt_0 <= level && level < volt_0_55) {
     Serial.println(level);
@@ -368,7 +368,7 @@ void update_screen() {
       break;
     }
     case TEMPERATURE: {
-      if (scd30_data_valid) {
+      if (timeinfo.tm_sec % 10 < 5 && scd30_data_valid) {
         screen_chars[0] = '\'';
         screen_chars[1] = '\'';
         screen_chars[2] = '\'';
@@ -380,22 +380,22 @@ void update_screen() {
         screen_chars[n] = 'C';
         screen_chars[n+1] = 0;
       } else {
-        screen_chars[0] = '\'';
-        screen_chars[1] = '\'';
-        screen_chars[2] = '\'';
-        screen_chars[3] = '\'';
-        screen_chars[4] = '\'';
-        screen_chars[5] = 'T';
-        screen_chars[6] = 'e';
-        screen_chars[7] = 'm';
-        screen_chars[8] = 'p';
-        screen_chars[9] = '.';
-        screen_chars[10] = 0;
+        // screen_chars[0] = '\'';
+        // screen_chars[1] = '\'';
+        // screen_chars[2] = '\'';
+        // screen_chars[3] = '\'';
+        // screen_chars[4] = '\'';
+        screen_chars[0] = 'T';
+        screen_chars[1] = 'e';
+        screen_chars[2] = 'm';
+        screen_chars[3] = 'p';
+        screen_chars[4] = '.';
+        screen_chars[5] = 0;
       }
       break;
     }
     case HUMIDITY: {
-      if (scd30_data_valid) {
+      if (timeinfo.tm_sec % 10 < 5 && scd30_data_valid) {
         screen_chars[0] = '\'';
         screen_chars[1] = '\'';
         screen_chars[2] = '\'';
@@ -411,11 +411,11 @@ void update_screen() {
         screen_chars[2] = '\'';
         screen_chars[3] = '\'';
         screen_chars[4] = '\'';
-        screen_chars[5] = '\'';
-        screen_chars[6] = 'R';
-        screen_chars[7] = 'H';
-        screen_chars[8] = '%';
-        screen_chars[9] = 0;
+        // screen_chars[5] = '\'';
+        screen_chars[5] = 'R';
+        screen_chars[6] = 'H';
+        screen_chars[7] = '%';
+        screen_chars[8] = 0;
       }
       break;
     }

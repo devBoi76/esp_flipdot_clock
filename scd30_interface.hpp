@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SensirionI2cScd30.h>
-#include "pinouts.hpp"
+#include "config.hpp"
 
 // I2C SCD30 config
 inline SensirionI2cScd30 scd30;
