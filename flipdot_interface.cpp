@@ -1,11 +1,17 @@
 #include <Arduino.h>
 #include "flipdot_interface.hpp"
 #include "util.h"
+#include "pinouts.hpp"
 
-#define CLK_PIN 25
-#define DATA_PIN 26
-#define LOAD_PIN 15
-#define EN_PIN 16
+// #define DATA_PIN 26
+// #define CLK_PIN 25
+// #define LOAD_PIN 15
+// #define EN_PIN 16
+
+// #define DATA_PIN 0
+// #define CLK_PIN 4
+// #define LOAD_PIN 5
+// #define EN_PIN 16
 
 screen_cursor_t bad_pixels;
 screen_cursor_t last_screen;

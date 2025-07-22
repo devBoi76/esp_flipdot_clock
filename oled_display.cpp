@@ -1,9 +1,10 @@
 #include "oled_display.hpp"
+#include "pinouts.hpp"
 
 bool try_init_oled(TwoWire &wire) {
   Serial.println("[OLED] init...");
 
-  if (!wire.begin(5, 4)) return false;
+  if (!wire.begin(OLED_SDA, OLED_SCL)) return false;
 
   oled = Adafruit_SSD1306(OLED_W, OLED_H, &wire, OLED_RESET);
   if (!oled.begin(SSD1306_SWITCHCAPVCC, 0x3C, false, false)) return false;

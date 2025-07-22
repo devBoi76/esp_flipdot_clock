@@ -22,10 +22,11 @@
 #include "scd30_interface.hpp"
 #include "oled_display.hpp"
 #include "flipdot_interface.hpp"
+#include "pinouts.hpp"
 
 // wifi config
-#define SSID_PREF "ssid"
-#define PASS_PREF "password"
+// #define SSID_PREF "ssid"
+// #define PASS_PREF "password"
 
 bool wifi_set_correctly = false;
 String wifi_ssid;
@@ -67,7 +68,7 @@ enum DisplayedContent {
 };
 DisplayedContent displayed_content = TIME;
 
-#define DISPLAY_CONTROL_PIN 36
+// #define DISPLAY_CONTROL_PIN 36
 
 DisplayedContent get_pressed_button() {
   const int volt_0 = 0;
@@ -77,7 +78,7 @@ DisplayedContent get_pressed_button() {
   const int volt_2_8 = 3000;
 
   int level = analogRead(DISPLAY_CONTROL_PIN);
-  
+  Serial.println(level);
 
   if (volt_0 <= level && level < volt_0_55) {
     Serial.println(level);
@@ -326,8 +327,8 @@ void print_help() {
   slogln("    Then type in: wifi SSID, enter, wifi Password, enter");
 }
 
-#define PHOTODIODE 39
-#define DISPLAY_TRESHOLD 300
+// #define PHOTODIODE 39
+// #define DISPLAY_TRESHOLD 300
 void update_screen() {
   if (!wifi_set_correctly) { slogln("WiFi not configured. Type `configure`."); }
 
@@ -339,8 +340,9 @@ void update_screen() {
   slog("Got GPS fix?: ");
   slogln(gps_got_fix == true);
 
-  int light_level = analogRead(PHOTODIODE);
-  if (light_level < DISPLAY_TRESHOLD) {
+  int light_level = analogRead(PHOTODIODE); 
+  
+  if (light_level > 2000) { // 2.5V is high level. More than 2000 should be ok.
     slog("Light too low to update screen.");
     screen_chars[0] = ' ';
     screen_chars[1] = '(';
@@ -409,9 +411,9 @@ void update_screen() {
         screen_chars[2] = '\'';
         screen_chars[3] = '\'';
         screen_chars[4] = '\'';
-        screen_chars[5] = 'H';
-        screen_chars[6] = '2';
-        screen_chars[7] = 'O';
+        screen_chars[5] = '\'';
+        screen_chars[6] = 'R';
+        screen_chars[7] = 'H';
         screen_chars[8] = '%';
         screen_chars[9] = 0;
       }
@@ -423,9 +425,9 @@ void update_screen() {
         screen_chars[0] = '\'';
         screen_chars[1] = '\'';
         screen_chars[2] = '\'';
-        screen_chars[3] = '\'';
-        screen_chars[4] = '\'';
-        itoa((int)co2, screen_chars+5, 10);
+        // screen_chars[3] = '\'';
+        // screen_chars[4] = '\'';
+        itoa((int)co2, screen_chars+3, 10);
       } else {
         screen_chars[0] = '\'';
         screen_chars[1] = '\'';
